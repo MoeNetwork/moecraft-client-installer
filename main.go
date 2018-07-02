@@ -132,11 +132,13 @@ func main() {
 https://github.com/balthild/moecraft-client-installer
 
 警告:
-该程序将于它所在的文件夹安装 MoeCraft 客户端, 并删除该文件夹内的其他 Minecraft 版本
-请勿把安装器与无关文件放在同一文件夹内, 否则, 使用者需自行承担由此引起的数据损失
+该程序将于它所在的文件夹安装 MoeCraft 客户端, 并删除该文件夹内
+的其他 Minecraft 版本. 请勿把安装器与无关文件放在同一文件夹内,
+否则, 使用者需自行承担可能发生的数据损失.
 
-如果你需要安装自定义 Mod, 请在安装器旁边建立 mods 文件夹, 并把自定义 Mod 放入其中
-不要把自定义 Mod 直接放在 .minecraft/mods 中, 否则它们会被删除
+如果你需要添加自定义 Mod, 请在安装器旁边建立 mods 文件夹, 并把
+Mod 放入这个文件夹中. 不要把 Mod 直接放在 .minecraft/mods 中,
+否则它们会被删除.
 
 `)
 
@@ -149,7 +151,7 @@ https://github.com/balthild/moecraft-client-installer
 		}
 
 		for {
-			fmt.Print("选择一个下载源 (默认为 1): ")
+			fmt.Print("选择一个下载源: ")
 
 			var choose int
 			fmt.Scan(&choose)
@@ -210,7 +212,7 @@ https://github.com/balthild/moecraft-client-installer
 		_, err := os.Stat(file.Path)
 		if os.IsNotExist(err) {
 			downloadFile(file.Path)
-			return
+			continue
 		}
 	}
 

@@ -12,9 +12,14 @@ import (
 	"path/filepath"
 )
 
-// @TODO
-var baseURLs = [...]string{
-	"https://cdn.moecraft.net/client/",
+type Repo struct {
+	Name    string
+	BaseURL string
+}
+
+var repos = [...]Repo{
+	// {"MoeCraft CDN", "https://cdn.moecraft.net/"},
+	{"Git@OSC", "https://gitee.com/balthild/client/raw/master/"},
 }
 
 type FileEntry struct {
@@ -135,6 +140,31 @@ https://github.com/balthild/moecraft-client-installer
 
 `)
 
+	baseURL = os.Getenv("BASE_URL")
+	if len(baseURL) == 0 {
+		fmt.Println("目前可用的下载源:")
+		for i, repo := range repos {
+			fmt.Printf("[%d] %s", i+1, repo.Name)
+			fmt.Println()
+		}
+
+		for {
+			fmt.Print("选择一个下载源 (默认为 1): ")
+
+			var choose int
+			fmt.Scan(&choose)
+
+			if choose > 0 && choose <= len(repos) {
+				baseURL = repos[choose-1].BaseURL
+				break
+			}
+
+			fmt.Println("Are you kidding me?")
+		}
+
+		fmt.Println()
+	}
+
 	useWorkDir := os.Getenv("USE_WORK_DIR")
 	if useWorkDir != "true" && useWorkDir != "1" {
 		ex, err := os.Executable()
@@ -147,29 +177,6 @@ https://github.com/balthild/moecraft-client-installer
 		fmt.Print("如无错误，按 [Enter] 继续:")
 		fmt.Scanln()
 		fmt.Println()
-	}
-
-	baseURL = os.Getenv("BASE_URL")
-	if len(baseURL) == 0 {
-		fmt.Println("目前可用的下载源:")
-		for i, url := range baseURLs {
-			fmt.Printf("[%d] %s", i+1, url)
-			fmt.Println()
-		}
-
-		for {
-			fmt.Print("选择一个下载源 (默认为 1): ")
-
-			var choose int
-			fmt.Scan(&choose)
-
-			if choose > 0 && choose <= len(baseURLs) {
-				baseURL = baseURLs[choose-1]
-				break
-			}
-
-			fmt.Println("Are you kidding me?")
-		}
 	}
 
 	resp, err := http.Get(baseURL + "metadata.json")

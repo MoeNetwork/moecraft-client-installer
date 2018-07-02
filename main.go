@@ -28,9 +28,10 @@ type DirEntry struct {
 }
 
 type Metadata struct {
-	UpdatedAt   int64        `json:"updated_at"`
-	SyncedDirs  []*DirEntry  `json:"synced_dirs"`
-	SyncedFiles []*FileEntry `json:"synced_files"`
+	UpdatedAt    int64        `json:"updated_at"`
+	SyncedDirs   []*DirEntry  `json:"synced_dirs"`
+	SyncedFiles  []*FileEntry `json:"synced_files"`
+	DefaultFiles []*FileEntry `json:"default_files"`
 }
 
 var metadata Metadata
@@ -109,8 +110,14 @@ func ensureFile(path string, md5 string) {
 	}
 }
 
-func promptLocation() {
+func addToKeepList(path string, keep map[string]bool) {
+	keep[path] = true
 
+	basePath := path
+	for basePath != "." {
+		basePath = filepath.Dir(basePath)
+		keep[basePath] = true
+	}
 }
 
 func main() {
@@ -180,28 +187,24 @@ https://github.com/balthild/moecraft-client-installer
 
 	for _, dir := range metadata.SyncedDirs {
 		for _, file := range dir.Files {
-			keep[file.Path] = true
-
-			basePath := file.Path
-			for basePath != "." {
-				basePath = filepath.Dir(basePath)
-				keep[basePath] = true
-			}
-
+			addToKeepList(file.Path, keep)
 			ensureFile(file.Path, file.MD5)
 		}
 	}
 
 	for _, file := range metadata.SyncedFiles {
-		keep[file.Path] = true
-
-		basePath := file.Path
-		for basePath != "." {
-			basePath = filepath.Dir(basePath)
-			keep[basePath] = true
-		}
-
+		addToKeepList(file.Path, keep)
 		ensureFile(file.Path, file.MD5)
+	}
+
+	for _, file := range metadata.DefaultFiles {
+		addToKeepList(file.Path, keep)
+
+		_, err := os.Stat(file.Path)
+		if os.IsNotExist(err) {
+			downloadFile(file.Path)
+			return
+		}
 	}
 
 	waitForDownloading()

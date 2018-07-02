@@ -39,8 +39,10 @@ var baseURL string
 var sem = make(chan bool, 5)
 
 func bullshit(err error) {
-	// Fuck the shitty golang error handling
 	if err != nil {
+		fmt.Println()
+		fmt.Println("安装失败")
+
 		panic(err)
 	}
 }
@@ -108,6 +110,29 @@ func ensureFile(path string, md5 string) {
 }
 
 func main() {
+	fmt.Println("[ MoeCraft 客户端安装器 ]")
+	fmt.Println("如遇问题, 请在群里求助管理员, 或前去以下网址汇报: ")
+	fmt.Println("https://github.com/balthild/moecraft-client-installer")
+	fmt.Println()
+
+	fmt.Println("警告: 该程序会在它所在的文件夹内安装/更新 MoeCraft 专用客户端, 并删除该文件夹内其它的 Minecraft 版本")
+	fmt.Println("请勿把安装器与无关文件, 尤其是 Minecraft 客户端放在同一个文件夹内, 否则, 由此引起的数据损失, 安装器概不负责")
+	fmt.Println()
+
+	useWorkDir := os.Getenv("USE_WORK_DIR")
+	if useWorkDir != "true" && useWorkDir != "1" {
+		ex, err := os.Executable()
+		bullshit(err)
+
+		dir := filepath.Dir(ex)
+		os.Chdir(dir)
+
+		fmt.Println("请确认安装位置:", dir)
+		fmt.Print("如无错误，按 [Enter] 继续:")
+		fmt.Scanln()
+		fmt.Println()
+	}
+
 	baseURL = os.Getenv("BASE_URL")
 	if len(baseURL) == 0 {
 		fmt.Println("目前可用的下载源:")

@@ -28,6 +28,7 @@ type DirEntry struct {
 }
 
 type Metadata struct {
+	UpdatedAt   int64        `json:"updated_at"`
 	SyncedDirs  []*DirEntry  `json:"synced_dirs"`
 	SyncedFiles []*FileEntry `json:"synced_files"`
 }
@@ -108,19 +109,24 @@ func ensureFile(path string, md5 string) {
 	}
 }
 
+func promptLocation() {
+
+}
+
 func main() {
-	fmt.Println("[ MoeCraft 客户端安装器 ]")
-	fmt.Println("如遇问题, 请在群里求助管理员, 或前去以下网址汇报: ")
-	fmt.Println("https://github.com/balthild/moecraft-client-installer")
-	fmt.Println()
+	fmt.Print(`MoeCraft 客户端安装器
 
-	fmt.Println("警告: 该程序会在它所在的文件夹内安装/更新 MoeCraft 专用客户端, 并删除该文件夹内其它的 Minecraft 版本")
-	fmt.Println("请勿把安装器与无关文件, 尤其是 Minecraft 客户端放在同一个文件夹内, 否则, 由此引起的数据损失, 安装器概不负责")
-	fmt.Println()
+如遇问题, 请在群里求助管理员, 或前去以下网址汇报:
+https://github.com/balthild/moecraft-client-installer
 
-	fmt.Println("如果你需要安装自定义 mod, 请在安装器旁边建立 mods 文件夹, 并把自定义 mod 放入其中")
-	fmt.Println("不要把自定义 mod 直接放在 .minecraft/mods 中, 否则它们会被删除")
-	fmt.Println()
+警告:
+该程序将于它所在的文件夹安装 MoeCraft 客户端, 并删除该文件夹内的其他 Minecraft 版本
+请勿把安装器与无关文件放在同一文件夹内, 否则, 使用者需自行承担由此引起的数据损失
+
+如果你需要安装自定义 Mod, 请在安装器旁边建立 mods 文件夹, 并把自定义 Mod 放入其中
+不要把自定义 Mod 直接放在 .minecraft/mods 中, 否则它们会被删除
+
+`)
 
 	useWorkDir := os.Getenv("USE_WORK_DIR")
 	if useWorkDir != "true" && useWorkDir != "1" {
@@ -170,29 +176,16 @@ func main() {
 	err = json.Unmarshal(data, &metadata)
 	bullshit(err)
 
-	removeDirs := make(map[string]bool)
-	removeFiles := make(map[string]bool)
+	keep := make(map[string]bool)
 
 	for _, dir := range metadata.SyncedDirs {
-		os.MkdirAll(dir.Path, 0755)
-
-		filepath.Walk(dir.Path, func(path string, info os.FileInfo, err error) error {
-			if info.IsDir() {
-				removeDirs[path] = true
-			} else {
-				removeFiles[path] = true
-			}
-
-			return nil
-		})
-
 		for _, file := range dir.Files {
-			removeFiles[file.Path] = false
+			keep[file.Path] = true
 
-			basePath := filepath.Dir(file.Path)
+			basePath := file.Path
 			for basePath != "." {
-				removeDirs[basePath] = false
 				basePath = filepath.Dir(basePath)
+				keep[basePath] = true
 			}
 
 			ensureFile(file.Path, file.MD5)
@@ -200,12 +193,12 @@ func main() {
 	}
 
 	for _, file := range metadata.SyncedFiles {
-		removeFiles[file.Path] = false
+		keep[file.Path] = true
 
-		basePath := filepath.Dir(file.Path)
+		basePath := file.Path
 		for basePath != "." {
-			removeDirs[basePath] = false
 			basePath = filepath.Dir(basePath)
+			keep[basePath] = true
 		}
 
 		ensureFile(file.Path, file.MD5)
@@ -221,46 +214,33 @@ func main() {
 		}
 
 		customMods = append(customMods, file.Name())
-		removeFiles[".minecraft/mods/" + file.Name()] = false
+		keep[".minecraft/mods/"+file.Name()] = true
 	}
 
-	for path, remove := range removeFiles {
-		if remove {
-			os.Remove(path)
-			fmt.Println("已删除:", path)
-		}
+	for _, dir := range metadata.SyncedDirs {
+		filepath.Walk(dir.Path, func(path string, info os.FileInfo, err error) error {
+			if !keep[path] {
+				os.RemoveAll(path)
+				fmt.Println("已删除:", path)
+			}
+
+			return nil
+		})
 	}
 
-	for path, remove := range removeDirs {
-		if remove {
-			os.RemoveAll(path)
-			fmt.Println("已删除:", path)
-		}
-	}
+	for _, mod := range customMods {
+		src, err := os.Open("mods/" + mod)
+		bullshit(err)
+		defer src.Close()
 
-	if len(customMods) > 0 {
-		fmt.Println()
-		fmt.Println("正在安装自定义 mod:")
+		dst, err := os.Create(".minecraft/mods/" + mod)
+		bullshit(err)
+		defer dst.Close()
 
-		for _, mod := range customMods {
-			src, err := os.Open("mods/" + mod)
-			if err != nil {
-				fmt.Println("安装", mod, "失败:", err.Error())
-			}
+		_, err = io.Copy(dst, src)
+		bullshit(err)
 
-			dst, err := os.Create(".minecraft/mods/" + mod)
-			if err != nil {
-				fmt.Println("安装", mod, "失败:", err.Error())
-			}
-
-			_, err = io.Copy(dst,src)
-			if err != nil {
-				fmt.Println("安装", mod, "失败:", err.Error())
-			}
-
-			src.Close()
-			dst.Close()
-		}
+		fmt.Println("自定义 Mod:", mod)
 	}
 
 	fmt.Println("安装完成")

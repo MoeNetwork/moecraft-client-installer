@@ -61,11 +61,10 @@ func hashFile(path string) string {
 }
 
 func downloadFile(path string) {
-	f, err := os.Create(path)
-	bullshit(err)
-
 	sem <- true
 	go func() {
+		f, err := os.Create(path)
+		bullshit(err)
 		defer f.Close()
 
 		resp, err := http.Get(baseURL + path)
@@ -117,6 +116,10 @@ func main() {
 
 	fmt.Println("警告: 该程序会在它所在的文件夹内安装/更新 MoeCraft 专用客户端, 并删除该文件夹内其它的 Minecraft 版本")
 	fmt.Println("请勿把安装器与无关文件, 尤其是 Minecraft 客户端放在同一个文件夹内, 否则, 由此引起的数据损失, 安装器概不负责")
+	fmt.Println()
+
+	fmt.Println("如果你需要安装自定义 mod, 请在安装器旁边建立 mods 文件夹, 并把自定义 mod 放入其中")
+	fmt.Println("不要把自定义 mod 直接放在 .minecraft/mods 中, 否则它们会被删除")
 	fmt.Println()
 
 	useWorkDir := os.Getenv("USE_WORK_DIR")
@@ -208,6 +211,19 @@ func main() {
 		ensureFile(file.Path, file.MD5)
 	}
 
+	waitForDownloading()
+
+	var customMods []string
+	files, _ := ioutil.ReadDir("mods")
+	for _, file := range files {
+		if file.IsDir() {
+			continue
+		}
+
+		customMods = append(customMods, file.Name())
+		removeFiles[".minecraft/mods/" + file.Name()] = false
+	}
+
 	for path, remove := range removeFiles {
 		if remove {
 			os.Remove(path)
@@ -222,7 +238,30 @@ func main() {
 		}
 	}
 
-	waitForDownloading()
+	if len(customMods) > 0 {
+		fmt.Println()
+		fmt.Println("正在安装自定义 mod:")
+
+		for _, mod := range customMods {
+			src, err := os.Open("mods/" + mod)
+			if err != nil {
+				fmt.Println("安装", mod, "失败:", err.Error())
+			}
+
+			dst, err := os.Create(".minecraft/mods/" + mod)
+			if err != nil {
+				fmt.Println("安装", mod, "失败:", err.Error())
+			}
+
+			_, err = io.Copy(dst,src)
+			if err != nil {
+				fmt.Println("安装", mod, "失败:", err.Error())
+			}
+
+			src.Close()
+			dst.Close()
+		}
+	}
 
 	fmt.Println("安装完成")
 }

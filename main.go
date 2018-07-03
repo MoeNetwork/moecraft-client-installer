@@ -5,11 +5,13 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/alexflint/go-arg"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 type Repo struct {
@@ -20,6 +22,12 @@ type Repo struct {
 var repos = [...]Repo{
 	// {"MoeCraft CDN", "https://cdn.moecraft.net/"},
 	{"Git@OSC", "https://gitee.com/balthild/client/raw/master/"},
+}
+
+type Arguments struct {
+	Repo    int
+	BaseURL string `help:"Overrides the --repo argument"`
+	Dir     string
 }
 
 type FileEntry struct {
@@ -41,6 +49,7 @@ type Metadata struct {
 
 var metadata Metadata
 var baseURL string
+var baseDir string
 
 // Limit downloading concurrency to 5
 var sem = make(chan bool, 5)
@@ -126,6 +135,9 @@ func addToKeepList(path string, keep map[string]bool) {
 }
 
 func main() {
+	var args Arguments
+	arg.MustParse(&args)
+
 	fmt.Print(`MoeCraft 客户端安装器
 
 如遇问题, 请在群里求助管理员, 或前去以下网址汇报:
@@ -142,8 +154,19 @@ Mod 放入这个文件夹中. 不要把 Mod 直接放在 .minecraft/mods 中,
 
 `)
 
-	baseURL = os.Getenv("BASE_URL")
-	if len(baseURL) == 0 {
+	if len(args.BaseURL) != 0 {
+		if strings.HasSuffix(args.BaseURL, "/") {
+			baseURL = args.BaseURL
+		} else {
+			baseURL = args.BaseURL + "/"
+		}
+	} else if args.Repo != 0 {
+		if args.Repo > 0 && args.Repo <= len(repos) {
+			baseURL = repos[args.Repo-1].BaseURL
+		} else {
+			panic("Invalid repo")
+		}
+	} else {
 		fmt.Println("目前可用的下载源:")
 		for i, repo := range repos {
 			fmt.Printf("[%d] %s", i+1, repo.Name)
@@ -167,18 +190,21 @@ Mod 放入这个文件夹中. 不要把 Mod 直接放在 .minecraft/mods 中,
 		fmt.Println()
 	}
 
-	useWorkDir := os.Getenv("USE_WORK_DIR")
-	if useWorkDir != "true" && useWorkDir != "1" {
+	if len(args.Dir) == 0 {
 		ex, err := os.Executable()
 		bullshit(err)
 
 		dir := filepath.Dir(ex)
-		os.Chdir(dir)
+		err = os.Chdir(dir)
+		bullshit(err)
 
 		fmt.Println("请确认安装位置:", dir)
 		fmt.Print("如无错误，按 [Enter] 继续:")
 		fmt.Scanln()
 		fmt.Println()
+	} else {
+		err := os.Chdir(args.Dir)
+		bullshit(err)
 	}
 
 	resp, err := http.Get(baseURL + "metadata.json")

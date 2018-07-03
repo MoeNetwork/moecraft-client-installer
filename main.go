@@ -281,18 +281,20 @@ Mod 放入这个文件夹中. 不要把 Mod 直接放在 .minecraft/mods 中,
 	}
 
 	for _, mod := range customMods {
-		src, err := os.Open("mods/" + mod)
-		bullshit(err)
-		defer src.Close()
+		func() {
+			src, err := os.Open("mods/" + mod)
+			bullshit(err)
+			defer src.Close()
 
-		dst, err := os.Create(".minecraft/mods/" + mod)
-		bullshit(err)
-		defer dst.Close()
+			dst, err := os.Create(".minecraft/mods/" + mod)
+			bullshit(err)
+			defer dst.Close()
 
-		_, err = io.Copy(dst, src)
-		bullshit(err)
+			_, err = io.Copy(dst, src)
+			bullshit(err)
 
-		fmt.Println("自定义 Mod:", mod)
+			fmt.Println("自定义 Mod:", mod)
+		}()
 	}
 
 	fmt.Println("安装完成")

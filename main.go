@@ -47,9 +47,23 @@ type Metadata struct {
 	DefaultFiles []*FileEntry `json:"default_files"`
 }
 
-var metadata Metadata
+type KeepList map[string]bool
+
+func (keep KeepList) Add(path string) {
+	keep[filepath.Clean(path)] = true
+
+	parent := path
+	for parent != "." {
+		parent = filepath.Dir(parent)
+		keep[parent] = true
+	}
+}
+
+func (keep KeepList) Has(path string) bool {
+	return keep[filepath.Clean(path)]
+}
+
 var baseURL string
-var baseDir string
 
 // Limit downloading concurrency to 5
 var sem = make(chan bool, 5)
@@ -102,6 +116,12 @@ func waitForDownloading() {
 	}
 }
 
+func validatePath(path string) {
+	if path[0] == '/' || path[1] == ':' {
+		panic("Absolute path is not allowed: " + path)
+	}
+}
+
 func ensureFile(path string, md5 string) {
 	err := os.MkdirAll(filepath.Dir(path), 0755)
 	bullshit(err)
@@ -121,16 +141,6 @@ func ensureFile(path string, md5 string) {
 
 		downloadFile(path)
 		return
-	}
-}
-
-func addToKeepList(path string, keep map[string]bool) {
-	keep[path] = true
-
-	basePath := path
-	for basePath != "." {
-		basePath = filepath.Dir(basePath)
-		keep[basePath] = true
 	}
 }
 
@@ -215,25 +225,29 @@ Mod 放入这个文件夹中. 不要把 Mod 直接放在 .minecraft/mods 中,
 
 	resp.Body.Close()
 
+	var metadata Metadata
 	err = json.Unmarshal(data, &metadata)
 	bullshit(err)
 
-	keep := make(map[string]bool)
+	keep := make(KeepList)
 
 	for _, dir := range metadata.SyncedDirs {
 		for _, file := range dir.Files {
-			addToKeepList(file.Path, keep)
+			validatePath(file.Path)
+			keep.Add(file.Path)
 			ensureFile(file.Path, file.MD5)
 		}
 	}
 
 	for _, file := range metadata.SyncedFiles {
-		addToKeepList(file.Path, keep)
+		validatePath(file.Path)
+		keep.Add(file.Path)
 		ensureFile(file.Path, file.MD5)
 	}
 
 	for _, file := range metadata.DefaultFiles {
-		addToKeepList(file.Path, keep)
+		validatePath(file.Path)
+		keep.Add(file.Path)
 
 		_, err := os.Stat(file.Path)
 		if os.IsNotExist(err) {
@@ -252,12 +266,12 @@ Mod 放入这个文件夹中. 不要把 Mod 直接放在 .minecraft/mods 中,
 		}
 
 		customMods = append(customMods, file.Name())
-		keep[".minecraft/mods/"+file.Name()] = true
+		keep.Add(".minecraft/mods/" + file.Name())
 	}
 
 	for _, dir := range metadata.SyncedDirs {
 		filepath.Walk(dir.Path, func(path string, info os.FileInfo, err error) error {
-			if !keep[path] {
+			if !keep.Has(path) {
 				os.RemoveAll(path)
 				fmt.Println("已删除:", path)
 			}

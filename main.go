@@ -144,6 +144,29 @@ func ensureFile(path string, md5 string) {
 	}
 }
 
+func setAuthlibInjectorServer() {
+	data, err := ioutil.ReadFile("HMCLData/hmcl.json")
+	if err != nil {
+		return
+	}
+
+	hmclConfig := make(map[string]interface{})
+	json.Unmarshal(data, &hmclConfig)
+
+	hmclConfig["authlibInjectorServers"] = []struct {
+		URL  string `json:"url"`
+		Name string `json:"name"`
+	}{
+		{`https://accounts.moecraft.net/?s\u003dAPI/Mc/authlib\u0026params\u003d/`, "MoeCraft"},
+	}
+
+	data, err = json.Marshal(hmclConfig)
+	bullshit(err)
+
+	err = ioutil.WriteFile("HMCLData/hmcl.json", data, 644)
+	bullshit(err)
+}
+
 func main() {
 	var args Arguments
 	arg.MustParse(&args)
@@ -299,6 +322,8 @@ Mod 放入这个文件夹中. 不要把 Mod 直接放在 .minecraft/mods 中,
 			fmt.Println("自定义 Mod:", mod)
 		}()
 	}
+
+	setAuthlibInjectorServer()
 
 	fmt.Println("安装完成")
 }

@@ -249,7 +249,10 @@ Mod 放入这个文件夹中. 不要把 Mod 直接放在 .minecraft/mods 中,
 		validatePath(file.Path)
 		keep.Add(file.Path)
 
-		_, err := os.Stat(file.Path)
+		err := os.MkdirAll(filepath.Dir(file.Path), 0755)
+		bullshit(err)
+
+		_, err = os.Stat(file.Path)
 		if os.IsNotExist(err) {
 			downloadFile(file.Path)
 			continue

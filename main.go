@@ -20,8 +20,8 @@ type Repo struct {
 }
 
 var repos = [...]Repo{
-	// {"MoeCraft CDN", "https://cdn.moecraft.net/"},
-	{"Git@OSC", "https://gitee.com/balthild/client/raw/master/"},
+	{"MoeCraft CDN", "http://cdn.moecraft.net/"},
+	//{"Git@OSC", "https://gitee.com/balthild/client/raw/master/"},
 }
 
 type Arguments struct {
@@ -157,10 +157,10 @@ func setAuthlibInjectorServer() {
 		URL  string `json:"url"`
 		Name string `json:"name"`
 	}{
-		{`https://accounts.moecraft.net/?s\u003dAPI/Mc/authlib\u0026params\u003d/`, "MoeCraft"},
+		{`https://accounts.moecraft.net/?s=API/Mc/authlib&params=/`, "MoeCraft"},
 	}
 
-	data, err = json.Marshal(hmclConfig)
+	data, err = json.Marshal(hmclConfig) 
 	bullshit(err)
 
 	err = ioutil.WriteFile("HMCLData/hmcl.json", data, 644)
@@ -200,26 +200,30 @@ Mod 放入这个文件夹中. 不要把 Mod 直接放在 .minecraft/mods 中,
 			panic("Invalid repo")
 		}
 	} else {
-		fmt.Println("目前可用的下载源:")
-		for i, repo := range repos {
-			fmt.Printf("[%d] %s", i+1, repo.Name)
-			fmt.Println()
-		}
-
-		for {
-			fmt.Print("选择一个下载源: ")
-
-			var choose int
-			fmt.Scan(&choose)
-
-			if choose > 0 && choose <= len(repos) {
-				baseURL = repos[choose-1].BaseURL
-				break
+		if(len(repos) > 1) {
+			fmt.Println("目前可用的下载源:")
+			for i, repo := range repos {
+				fmt.Printf("[%d] %s", i+1, repo.Name)
+				fmt.Println()
 			}
 
-			fmt.Println("Are you kidding me?")
-		}
+			for {
+				fmt.Print("选择一个下载源(输入序号): ")
+				
+				var choose int
+				fmt.Scan(&choose)
 
+				if choose > 0 && choose <= len(repos) {
+					baseURL = repos[choose-1].BaseURL
+					break
+				}
+
+				fmt.Println("Are you kidding me?")
+			}
+		} else {
+			fmt.Println("使用默认下载源: " + repos[0].Name)
+			baseURL = repos[0].BaseURL;
+		}
 		fmt.Println()
 	}
 
@@ -230,10 +234,10 @@ Mod 放入这个文件夹中. 不要把 Mod 直接放在 .minecraft/mods 中,
 		dir := filepath.Dir(ex)
 		err = os.Chdir(dir)
 		bullshit(err)
-
+		var fuckgo string
 		fmt.Println("请确认安装位置:", dir)
 		fmt.Print("如无错误，按 [Enter] 继续:")
-		fmt.Scanln()
+		fmt.Scanln(&fuckgo) //to support windows platform
 		fmt.Println()
 	} else {
 		err := os.Chdir(args.Dir)

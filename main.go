@@ -145,6 +145,7 @@ func ensureFile(path string, md5 string) {
 }
 
 func setAuthlibInjectorServer() {
+	/*
 	data, err := ioutil.ReadFile("HMCLData/hmcl.json")
 	if err != nil {
 		return
@@ -165,6 +166,7 @@ func setAuthlibInjectorServer() {
 
 	err = ioutil.WriteFile("HMCLData/hmcl.json", data, 644)
 	bullshit(err)
+	*/
 }
 
 func main() {

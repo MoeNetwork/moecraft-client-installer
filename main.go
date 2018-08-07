@@ -15,19 +15,24 @@ import (
 )
 
 type Repo struct {
-	Name    string
-	BaseURL string
+	ID      int    `json:"id"`
+	Name    string `json:"name"`
+	BaseURL string `json:"baseurl"`
 }
 
 var repos = [...]Repo{
-	{"MoeCraft CDN", "http://cdn.moecraft.net/"},
-	//{"Git@OSC", "https://gitee.com/balthild/client/raw/master/"},
+	{1, "MoeCraft CDN", "http://cdn.moecraft.net/"},
+	//{2, "Git@OSC", "https://gitee.com/balthild/client/raw/master/"},
 }
 
 type Arguments struct {
 	Repo    int
 	BaseURL string `help:"Overrides the --repo argument"`
 	Dir     string
+	Yes     bool `help:"Automatically answer all questions"`
+	NoLogo  bool `help:"Do not show logo"`
+	Exit    bool `help:"Exit after things from command line done"`
+	Print   string `help:"Print one of the following information in JSON format: repos"`
 }
 
 type FileEntry struct {
@@ -172,22 +177,35 @@ func setAuthlibInjectorServer() {
 func main() {
 	var args Arguments
 	arg.MustParse(&args)
-
-	fmt.Print(`MoeCraft 客户端安装器
-
+	
+	if(!args.NoLogo && !args.Exit) {
+		fmt.Print(`MoeCraft 客户端安装器
+======================================================
 如遇问题, 请在群里求助管理员, 或前去以下网址汇报:
 https://github.com/balthild/moecraft-client-installer
 
-警告:
-该程序将于它所在的文件夹安装 MoeCraft 客户端, 并删除该文件夹内
-的其他 Minecraft 版本. 请勿把安装器与无关文件放在同一文件夹内,
-否则, 使用者需自行承担可能发生的数据损失.
+警告:该程序将于它所在的文件夹安装 MoeCraft 客户端, 并删除该文件夹内的其他 Minecraft 版本. 请勿把安装器与无关文件放在同一文件夹内,否则, 使用者需自行承担可能发生的数据损失.
 
-如果你需要添加自定义 Mod, 请在安装器旁边建立 mods 文件夹, 并把
-Mod 放入这个文件夹中. 不要把 Mod 直接放在 .minecraft/mods 中,
-否则它们会被删除.
-
+如果你需要添加自定义 Mod, 请在安装器旁边建立 mods 文件夹, 并把Mod 放入这个文件夹中. 不要把 Mod 直接放在 .minecraft/mods 中,否则它们会被删除.
+======================================================
 `)
+	}
+
+	if len(args.Print) > 0 {
+		var PrintType = strings.ToLower(args.Print)
+		switch PrintType {
+			case "repos":
+				jsonBytes,jsonError := json.Marshal(repos)
+				if jsonError != nil {
+					fmt.Print(jsonError);
+				}
+				fmt.Print(string(jsonBytes))
+		}
+	}
+
+	if args.Exit {
+		os.Exit(0)
+	}
 
 	if len(args.BaseURL) != 0 {
 		if strings.HasSuffix(args.BaseURL, "/") {
@@ -202,7 +220,7 @@ Mod 放入这个文件夹中. 不要把 Mod 直接放在 .minecraft/mods 中,
 			panic("Invalid repo")
 		}
 	} else {
-		if(len(repos) > 1) {
+		if(len(repos) > 1 && !args.Yes) {
 			fmt.Println("目前可用的下载源:")
 			for i, repo := range repos {
 				fmt.Printf("[%d] %s", i+1, repo.Name)
@@ -236,11 +254,13 @@ Mod 放入这个文件夹中. 不要把 Mod 直接放在 .minecraft/mods 中,
 		dir := filepath.Dir(ex)
 		err = os.Chdir(dir)
 		bullshit(err)
-		var fuckgo string
-		fmt.Println("请确认安装位置:", dir)
-		fmt.Print("如无错误，按 [Enter] 继续:")
-		fmt.Scanln(&fuckgo) //to support windows platform
-		fmt.Println()
+		if !args.Yes {
+			var fuckgo string
+			fmt.Println("请确认安装位置:", dir)
+			fmt.Print("如无错误，按 [Enter] 继续:")
+			fmt.Scanln(&fuckgo) //to support windows platform
+			fmt.Println()
+		}
 	} else {
 		err := os.Chdir(args.Dir)
 		bullshit(err)

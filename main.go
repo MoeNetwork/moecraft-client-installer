@@ -150,7 +150,6 @@ func ensureFile(path string, md5 string) {
 }
 
 func setAuthlibInjectorServer() {
-	/*
 	data, err := ioutil.ReadFile("HMCLData/hmcl.json")
 	if err != nil {
 		return
@@ -159,19 +158,17 @@ func setAuthlibInjectorServer() {
 	hmclConfig := make(map[string]interface{})
 	json.Unmarshal(data, &hmclConfig)
 
+	url := json.RawMessage(`"https://accounts.moecraft.net/?s\u003dAPI/Mc/authlib\u0026params\u003d/"`)
 	hmclConfig["authlibInjectorServers"] = []struct {
-		URL  string `json:"url"`
-		Name string `json:"name"`
-	}{
-		{`https://accounts.moecraft.net/?s=API/Mc/authlib&params=/`, "MoeCraft"},
-	}
+		URL  json.RawMessage `json:"url"`
+		Name string          `json:"name"`
+	}{{url, "MoeCraft"}}
 
 	data, err = json.Marshal(hmclConfig)
 	bullshit(err)
 
 	err = ioutil.WriteFile("HMCLData/hmcl.json", data, 644)
 	bullshit(err)
-	*/
 }
 
 func main() {

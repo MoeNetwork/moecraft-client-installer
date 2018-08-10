@@ -21,7 +21,7 @@ type Repo struct {
 }
 
 var repos = [...]Repo{
-	{1, "MoeCraft CDN", "http://cdn.moecraft.net/"},
+	{1, "MoeCraft CDN", "https://gg:fuckthunder@cdn.moecraft.net/"},
 	// {2, "Git@OSC", "https://gitee.com/balthild/client/raw/master/"},
 }
 

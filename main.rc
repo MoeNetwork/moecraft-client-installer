@@ -1,0 +1,29 @@
+1 VERSIONINFO
+FILEVERSION     1,0,0,0
+PRODUCTVERSION  1,0,0,0
+FILEFLAGS       0x0L
+FILEFLAGSMASK   0x3fL
+FILESUBTYPE     0
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904B0"
+        BEGIN
+            VALUE "FileDescription", "MoeCraft Command-Line Updater"
+            VALUE "FileVersion", "1.0"
+            VALUE "LegalCopyright", "Copyright (c) 2018 MoeNet Inc."
+            VALUE "InternalName", "MoeCraft Command-Line Updater"
+            VALUE "OriginalFilename", "MoeCraft-Updater.exe"
+            VALUE "ProductName", "MoeCraft Command-Line Updater"
+            VALUE "ProductVersion", "1.0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+            VALUE "Translation", 0x0409, 0x04B0
+    END
+END
+
+//1 ICON "icon.ico"
+
+1 RT_MANIFEST "main.manifest"

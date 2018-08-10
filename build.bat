@@ -15,6 +15,13 @@ set GOOS=darwin
 set GOARCH=amd64
 go build -o bin/installer-darwin-amd64
 
+echo Preparing manifest for Windows builds
+if exist "%~dp0\rsrc.exe" (
+    "%~dp0\rsrc.exe" -manifest main.manifest -o main.syso
+) else (
+    rsrc -manifest main.manifest -o main.syso
+)
+
 echo Building binary for Windows (amd64)
 set GOOS=windows
 set GOARCH=amd64
@@ -24,3 +31,5 @@ echo Building binary for Windows (386)
 set GOOS=windows
 set GOARCH=386
 go build -o bin/installer-windows-386.exe
+
+del /f /q main.syso

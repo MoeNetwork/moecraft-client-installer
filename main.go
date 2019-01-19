@@ -21,9 +21,8 @@ type Repo struct {
 }
 
 var repos = [...]Repo{
-	{1, "MoeCraft CDN 1", "https://gg:fuckthunder@cdn.moecraft.net/"},
-	{2, "MoeCraft CDN 2", "https://cdn.kotori.net/"},
-	{3, "国外节点", "https://gitlab.com/Kenvix/moxbin/raw/master/"},
+	{1, "MoeCraft CDN", "https://cdn.kotori.net/"},
+	{2, "国外节点", "https://gitlab.com/Kenvix/moxbin/raw/master/"},
 }
 
 type Arguments struct {

@@ -22,7 +22,7 @@ type Repo struct {
 
 var repos = [...]Repo{
 	{1, "MoeCraft CDN", "https://gg:fuckthunder@cdn.moecraft.net/"},
-	// {2, "Git@OSC", "https://gitee.com/balthild/client/raw/master/"},
+	{2, "国外节点", "https://gitlab.com/Kenvix/moxbin/raw/master/"},
 }
 
 type Arguments struct {

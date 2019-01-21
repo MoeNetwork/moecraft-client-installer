@@ -12,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"errors"
 )
 
 type Repo struct {
@@ -248,12 +249,22 @@ https://github.com/balthild/moecraft-client-installer
 		ex, err := os.Executable()
 		bullshit(err)
 
-		dir := filepath.Dir(ex)
+		dir := filepath.Dir(ex) + "/MoeCraft"
+
+		stat, err := os.Stat(dir)
+		if os.IsNotExist(err) {
+			os.MkdirAll(dir, 0755)
+		} else if !stat.IsDir() {
+			bullshit(errors.New("Not a directory: " + dir))
+		}
+
 		err = os.Chdir(dir)
 		bullshit(err)
+
 		if !args.Yes {
 			fmt.Println("请确认安装位置:", dir)
 			fmt.Print("如无错误，按 [Enter] 继续:")
+
 			var fuckGo string // Fix bugs on fucking Windows
 			fmt.Scanln(&fuckGo)
 			fmt.Println()

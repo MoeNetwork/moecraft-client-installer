@@ -22,7 +22,7 @@ type Repo struct {
 }
 
 var repos = [...]Repo{
-	{1, "MoeCraft CDN", "https://cdn.kotori.net/"},
+	{1, "MoeCraft CDN", "https://cdn.kotori.net/MoeCraft/"},
 	{2, "国外节点", "https://gitlab.com/Kenvix/moxbin/raw/master/"},
 }
 
